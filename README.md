@@ -71,7 +71,7 @@ milly/
 
 ## 주요 테스트 케이스
 - 상품 생성
-- 재고 수정 + 동시성 제어
+- [재고 수정 + 동시성 제어](https://github.com/eagle-25/milly/blob/aa1773b3d26829e0b4bed4af915529068a403e8b/src/commerce/tests.py#L172)
 - 할인 적용
 - 쿠폰 생성
 - 기타 예외상황
