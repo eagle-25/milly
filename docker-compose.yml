@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # Django 애플리케이션
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      cache_from:
+        - milly-web:latest
+    image: milly-web:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=1
+      - DATABASE_URL=mysql://root:password@mysql:3306/milly_db
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - mysql
+      - redis
+    command:  |
+      sh -c "./scripts/wait-for-it.sh mysql:3306 -t 100 --
+             ./scripts/wait-for-it.sh redis:6379 -t 100 --
+             /opt/venv/bin/python src/manage.py migrate --noinput --
+             /opt/venv/bin/python src/manage.py runserver 0.0.0.0:8000"
+
+  # MySQL 데이터베이스
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: app
+      MYSQL_USER: milly
+      MYSQL_PASSWORD: 1234
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./.db/init-mysql.sql:/docker-entrypoint-initdb.d/init-mysql.sql
+    command: --default-authentication-plugin=mysql_native_password
+
+  # Redis 캐시/세션 스토어
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+volumes:
+  mysql_data:
+  redis_data:
